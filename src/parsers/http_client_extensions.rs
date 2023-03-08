@@ -1,7 +1,6 @@
 use reqwest::{
-    blocking::{RequestBuilder, Response},
+    blocking::{RequestBuilder},
     header::{HeaderMap, HeaderValue},
-    Result,
 };
 
 fn construct_headers() -> HeaderMap {

@@ -31,7 +31,10 @@ impl TopSportParser {
 
 impl BookieParser for TopSportParser {
     fn parse(&self) -> Result<Vec<SportEvent>, Box<dyn Error>> {
-        let client = reqwest::blocking::Client::new();
+        let client = reqwest::blocking::Client::builder()
+            .gzip(true)
+            .brotli(true)
+            .build()?;
 
         let resp = client
             .get("https://www.topsport.lt/krepsinis/eurolyga")
