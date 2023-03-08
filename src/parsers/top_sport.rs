@@ -4,6 +4,8 @@ use scraper::{Html, Selector};
 
 use crate::{models::SportEvent, parser::BookieParser};
 
+use super::http_client_extensions::DefaultChromeHeaders;
+
 pub struct TopSportParser {
     div_with_content_selector: Selector,
     meta_tag_with_name_selector: Selector,
@@ -29,7 +31,14 @@ impl TopSportParser {
 
 impl BookieParser for TopSportParser {
     fn parse(&self) -> Result<Vec<SportEvent>, Box<dyn Error>> {
-        let resp = reqwest::blocking::get("https://www.topsport.lt/krepsinis/eurolyga")?.text()?;
+        let client = reqwest::blocking::Client::new();
+
+        let resp = client
+            .get("https://www.topsport.lt/krepsinis/eurolyga")
+            .default_chrome_headers()
+            .send()?
+            .text()?;
+
         let document = Html::parse_document(&resp);
 
         let upcoming_events = document.select(&self.div_with_content_selector);
@@ -58,7 +67,7 @@ impl BookieParser for TopSportParser {
                 kof1: kofs.get(0).ok_or("can't find coefficient 1")?.clone(),
                 kof2: kofs.get(1).ok_or("can't find coefficient 2")?.clone(),
             };
-            
+
             result.push(sport_event)
         }
 

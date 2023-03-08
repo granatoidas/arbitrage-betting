@@ -6,6 +6,7 @@ mod models;
 mod parser;
 mod parsers {
     pub mod top_sport;
+    mod http_client_extensions;
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
