@@ -6,5 +6,6 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+headless_chrome = {git = "https://github.com/atroche/rust-headless-chrome", features = ["fetch"]}
 reqwest = { version = "0.11.14", features = ["blocking", "gzip", "brotli"] }
 scraper = "0.15.0"
