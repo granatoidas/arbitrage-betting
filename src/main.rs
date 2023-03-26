@@ -10,14 +10,15 @@ mod parsers {
     pub mod top_sport;
 }
 
-fn main() -> Result<(), Box<dyn Error>> {
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn Error>> {
     let top_sport_parser = parsers::top_sport::TopSportParser::new();
     let bet_safe_parser = parsers::bet_safe::BetSafePraser::new();
 
-    let top_sport_events = top_sport_parser.parse()?;
-    let bet_safe_events = bet_safe_parser.parse()?;
+    // let top_sport_events = top_sport_parser.parse().await?;
+    let bet_safe_events = bet_safe_parser.parse().await?;
 
-    println!("{:#?}", top_sport_events);
+    // println!("{:#?}", top_sport_events);
     println!("");
     println!("");
     println!("");

@@ -1,6 +1,7 @@
 use std::error::Error;
 
-use headless_chrome::Browser;
+use async_trait::async_trait;
+use playwright::Playwright;
 use scraper::{Html, Selector};
 
 use crate::{models::SportEvent, parser::BookieParser};
@@ -26,9 +27,10 @@ impl BetSafePraser {
     }
 }
 
+#[async_trait]
 impl BookieParser for BetSafePraser {
-    fn parse(&self) -> Result<Vec<SportEvent>, Box<dyn Error>> {
-        let document = Html::parse_document(&get_content_from_page()?);
+    async fn parse(&self) -> Result<Vec<SportEvent>, Box<dyn Error>> {
+        let document = Html::parse_document(&get_content_from_page().await?);
 
         let upcoming_events = document.select(&self.rows_selector);
 
@@ -45,6 +47,14 @@ impl BookieParser for BetSafePraser {
                 .map(|span| span.inner_html().trim().to_string())
                 .collect::<Vec<_>>();
 
+            let kof1 = kofs.get(0);
+            let kof2 = kofs.get(1);
+
+            if kof1.is_none() || kof2.is_none() {
+                // Indicates that there are locks on the first two bets. Might need more robust logic later
+                continue;
+            }
+
             let sport_event = SportEvent {
                 team1: team_names.get(0).ok_or("can't find team 1")?.clone(),
                 team2: team_names.get(1).ok_or("can't find team 2")?.clone(),
@@ -59,19 +69,19 @@ impl BookieParser for BetSafePraser {
     }
 }
 
-fn get_content_from_page() -> Result<String, Box<dyn Error>> {
-    // let launch_options = LaunchOptions::default_builder()
-    //     .path(Some(default_executable()?))
-    //     .headless(false)
-    //     .window_size(Some((1280, 1280)))
-    //     .build()?;
-    // let browser = Browser::new(launch_options)?;
-    let browser = Browser::default()?;
+async fn get_content_from_page() -> Result<String, Box<dyn Error>> {
+    let playwright = Playwright::initialize().await?;
+    playwright.prepare()?; // Install browsers
+    let chromium = playwright.chromium();
+    let browser = chromium.launcher().headless(true).launch().await?;
+    let context = browser.context_builder().build().await?;
+    let page = context.new_page().await?;
+    page.goto_builder("https://www.betsafe.lt/lt/lazybos/krepsinis/siaures-amerika/nba")
+        .goto()
+        .await?;
 
-    let tab = browser.new_tab()?;
-
-    tab.navigate_to("https://www.betsafe.lt/lt/lazybos/krepsinis/europa/euroleague")?
-        .wait_until_navigated()?;
-
-    Ok(tab.get_content()?)
+    page.wait_for_selector_builder("div.wpt-odd-changer")
+        .wait_for_selector()
+        .await?;
+    return Ok(page.content().await?);
 }
