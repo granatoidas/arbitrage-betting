@@ -6,7 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-reqwest = { version = "0.11.14", features = ["blocking", "gzip", "brotli"] }
+reqwest = { version = "0.11.14", features = ["gzip", "brotli"] }
 scraper = "0.15.0"
 playwright = "0.0.20"
 async-trait = "0.1.68"

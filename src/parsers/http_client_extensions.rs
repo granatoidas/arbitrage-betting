@@ -1,6 +1,6 @@
 use reqwest::{
-    blocking::{RequestBuilder},
     header::{HeaderMap, HeaderValue},
+    RequestBuilder,
 };
 
 fn construct_headers() -> HeaderMap {

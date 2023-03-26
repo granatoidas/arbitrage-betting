@@ -1,6 +1,7 @@
 use std::error::Error;
 
 use async_trait::async_trait;
+
 use scraper::{Html, Selector};
 
 use crate::{models::SportEvent, parser::BookieParser};
@@ -33,16 +34,15 @@ impl TopSportParser {
 #[async_trait]
 impl BookieParser for TopSportParser {
     async fn parse(&self) -> Result<Vec<SportEvent>, Box<dyn Error>> {
-        let client = reqwest::blocking::Client::builder()
-            .gzip(true)
-            .brotli(true)
-            .build()?;
+        let client = reqwest::Client::builder().gzip(true).brotli(true).build()?;
 
         let resp = client
             .get("https://www.topsport.lt/krepsinis/nba")
             .default_chrome_headers()
-            .send()?
-            .text()?;
+            .send()
+            .await?
+            .text()
+            .await?;
 
         let document = Html::parse_document(&resp);
 
