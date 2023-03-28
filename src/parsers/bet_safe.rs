@@ -2,13 +2,14 @@ use std::error::Error;
 
 use async_trait::async_trait;
 use playwright::Playwright;
-use scraper::{Html, Selector};
+use scraper::{ElementRef, Html, Selector};
 
 use crate::{models::SportEvent, parser::BookieParser};
 
 pub struct BetSafePraser {
     rows_selector: Selector,
     teams_selector: Selector,
+    columns_selector: Selector,
     odds_selector: Selector,
 }
 
@@ -21,7 +22,10 @@ impl BetSafePraser {
             teams_selector: Selector::parse("div.wpt-teams__team > span")
                 .expect("Css selector should have been valid."),
 
-            odds_selector: Selector::parse("div.wpt-odd-changer ")
+            columns_selector: Selector::parse("div.wpt-table__col")
+                .expect("Css selector should have been valid."),
+
+            odds_selector: Selector::parse("div.wpt-odd-changer")
                 .expect("Css selector should have been valid."),
         }
     }
@@ -47,6 +51,21 @@ impl BookieParser for BetSafePraser {
                 .map(|span| span.inner_html().trim().to_string())
                 .collect::<Vec<_>>();
 
+            let columns = event_element
+                .select(&self.columns_selector)
+                .collect::<Vec<_>>();
+
+            let is_column_locked = |element: Option<&ElementRef>| -> Result<bool, &str> {
+                Ok(element
+                    .ok_or("")?
+                    .value()
+                    .has_class("locked", scraper::CaseSensitivity::AsciiCaseInsensitive))
+            };
+
+            if is_column_locked(columns.get(1))? || is_column_locked(columns.get(2))? {
+                continue;
+            }
+
             let kof1 = kofs.get(0);
             let kof2 = kofs.get(1);
 
@@ -60,6 +79,7 @@ impl BookieParser for BetSafePraser {
                 team2: team_names.get(1).ok_or("can't find team 2")?.clone(),
                 kof1: kofs.get(0).ok_or("can't find coefficient 1")?.clone(),
                 kof2: kofs.get(1).ok_or("can't find coefficient 2")?.clone(),
+                provider: String::from("betSafe"),
             };
 
             result.push(sport_event)

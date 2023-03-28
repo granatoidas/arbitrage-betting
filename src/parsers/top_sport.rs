@@ -71,6 +71,7 @@ impl BookieParser for TopSportParser {
                 team2: team_names.get(1).ok_or("can't find team 2")?.to_string(),
                 kof1: kofs.get(0).ok_or("can't find coefficient 1")?.clone(),
                 kof2: kofs.get(1).ok_or("can't find coefficient 2")?.clone(),
+                provider: String::from("topSport"),
             };
 
             result.push(sport_event)
