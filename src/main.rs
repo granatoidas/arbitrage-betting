@@ -2,24 +2,38 @@ use std::{error::Error, vec};
 
 use models::SportEvent;
 use parser::BookieParser;
+use playwright::Playwright;
 
 mod models;
 mod parser;
 mod parsers {
     pub mod bet_safe;
     mod http_client_extensions;
+    pub mod oly_bet;
     pub mod top_sport;
 }
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
+    let playwright = Playwright::initialize().await?;
+    playwright.prepare()?; // Install browsers
+    let chromium = playwright.chromium();
+    let browser = chromium.launcher().headless(true).launch().await?;
+    let context = browser.context_builder().build().await?;
+
     let top_sport_parser = parsers::top_sport::TopSportParser::new();
-    let bet_safe_parser = parsers::bet_safe::BetSafePraser::new();
+
+    let page = context.new_page().await?;
+    let bet_safe_parser = parsers::bet_safe::BetSafePraser::new(page);
+
+    let page = context.new_page().await?;
+    let oly_bet_parser = parsers::oly_bet::OlyBetParser::new(page);
 
     let top_sport_events = top_sport_parser.parse().await?;
     let bet_safe_events = bet_safe_parser.parse().await?;
+    let oly_bet_events = oly_bet_parser.parse().await?;
 
-    let events_by_provider = vec![top_sport_events, bet_safe_events];
+    let events_by_provider = vec![top_sport_events, bet_safe_events, oly_bet_events];
 
     println!("{:#?}", find_arbitrages(events_by_provider));
 
@@ -32,7 +46,9 @@ async fn main() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-fn find_arbitrages(mut events_by_provider: Vec<Vec<SportEvent>>) -> Result<Vec<Vec<SportEvent>>, Box<dyn Error>> {
+fn find_arbitrages(
+    mut events_by_provider: Vec<Vec<SportEvent>>,
+) -> Result<Vec<Vec<SportEvent>>, Box<dyn Error>> {
     let mut grouped_events: Vec<Vec<SportEvent>> = vec![];
 
     while let Some(mut base_provider_events) = events_by_provider.pop() {

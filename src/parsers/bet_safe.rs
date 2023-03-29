@@ -1,7 +1,7 @@
 use std::error::Error;
 
 use async_trait::async_trait;
-use playwright::Playwright;
+use playwright::api::Page;
 use scraper::{ElementRef, Html, Selector};
 
 use crate::{models::SportEvent, parser::BookieParser};
@@ -11,10 +11,12 @@ pub struct BetSafePraser {
     teams_selector: Selector,
     columns_selector: Selector,
     odds_selector: Selector,
+
+    page: Page,
 }
 
 impl BetSafePraser {
-    pub fn new() -> Self {
+    pub fn new(page: Page) -> Self {
         BetSafePraser {
             rows_selector: Selector::parse("div.wpt-table__body > div.wpt-table__row")
                 .expect("Css selector should have been valid."),
@@ -27,6 +29,8 @@ impl BetSafePraser {
 
             odds_selector: Selector::parse("div.wpt-odd-changer")
                 .expect("Css selector should have been valid."),
+
+            page,
         }
     }
 }
@@ -34,7 +38,7 @@ impl BetSafePraser {
 #[async_trait]
 impl BookieParser for BetSafePraser {
     async fn parse(&self) -> Result<Vec<SportEvent>, Box<dyn Error>> {
-        let document = Html::parse_document(&get_content_from_page().await?);
+        let document = Html::parse_document(&self.get_content_from_page().await?);
 
         let upcoming_events = document.select(&self.rows_selector);
 
@@ -89,19 +93,18 @@ impl BookieParser for BetSafePraser {
     }
 }
 
-async fn get_content_from_page() -> Result<String, Box<dyn Error>> {
-    let playwright = Playwright::initialize().await?;
-    playwright.prepare()?; // Install browsers
-    let chromium = playwright.chromium();
-    let browser = chromium.launcher().headless(true).launch().await?;
-    let context = browser.context_builder().build().await?;
-    let page = context.new_page().await?;
-    page.goto_builder("https://www.betsafe.lt/lt/lazybos/krepsinis/siaures-amerika/nba")
-        .goto()
-        .await?;
+impl BetSafePraser {
+    async fn get_content_from_page(&self) -> Result<String, Box<dyn Error>> {
+        self.page
+            .goto_builder("https://www.betsafe.lt/lt/lazybos/krepsinis/siaures-amerika/nba")
+            // .wait_until(playwright::api::DocumentLoadState::DomContentLoaded)
+            .goto()
+            .await?;
 
-    page.wait_for_selector_builder("div.wpt-odd-changer")
-        .wait_for_selector()
-        .await?;
-    return Ok(page.content().await?);
+        self.page
+            .wait_for_selector_builder("div.wpt-odd-changer")
+            .wait_for_selector()
+            .await?;
+        return Ok(self.page.content().await?);
+    }
 }
