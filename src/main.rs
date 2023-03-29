@@ -56,16 +56,23 @@ fn find_arbitrages(
             let mut matching_events: Vec<SportEvent> = vec![];
 
             for provider_events in events_by_provider.iter_mut() {
-                let mut found_matching_event: Option<usize> = Option::None;
+                let mut found_matching_event: Option<(usize, bool)> = Option::None;
                 for (i, sport_event) in provider_events.iter().enumerate() {
-                    if compare_events(&base_sport_event, sport_event) {
-                        found_matching_event = Option::Some(i);
+                    let (events_match, order_matches) =
+                        compare_events(&base_sport_event, sport_event);
+                    if events_match {
+                        found_matching_event = Option::Some((i, order_matches));
                         break;
                     }
                 }
 
-                if let Some(matching_event_index) = found_matching_event {
-                    matching_events.push(provider_events.remove(matching_event_index));
+                if let Some((matching_event_index, order_matches)) = found_matching_event {
+                    let mut event = provider_events.remove(matching_event_index);
+                    if !order_matches {
+                        event.switch_teams();
+                    }
+
+                    matching_events.push(event);
                 }
             }
 
@@ -78,19 +85,19 @@ fn find_arbitrages(
     Ok(grouped_events)
 }
 
-fn compare_events(event_1: &SportEvent, event_2: &SportEvent) -> bool {
+fn compare_events(event_1: &SportEvent, event_2: &SportEvent) -> (bool, bool) {
     let event_1_team_1 = event_1.team1.to_lowercase();
     let event_1_team_2 = event_1.team2.to_lowercase();
     let event_2_team_1 = event_2.team1.to_lowercase();
     let event_2_team_2 = event_2.team2.to_lowercase();
 
     if event_1_team_1 == event_2_team_1 && event_1_team_2 == event_2_team_2 {
-        return true;
+        return (true, true);
     }
 
     if event_1_team_2 == event_2_team_1 && event_1_team_1 == event_2_team_2 {
-        return true;
+        return (true, false);
     }
 
-    false
+    (false, false)
 }
