@@ -29,11 +29,17 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let page = context.new_page().await?;
     let oly_bet_parser = parsers::oly_bet::OlyBetParser::new(page);
 
-    let top_sport_events = top_sport_parser.parse().await?;
-    let bet_safe_events = bet_safe_parser.parse().await?;
-    let oly_bet_events = oly_bet_parser.parse().await?;
+    let top_sport_events_future = top_sport_parser.parse();
+    let bet_safe_events_future = bet_safe_parser.parse();
+    let oly_bet_events_future = oly_bet_parser.parse();
 
-    let events_by_provider = vec![top_sport_events, bet_safe_events, oly_bet_events];
+    let (top_sport_events, bet_safe_events, oly_bet_events) = tokio::join!(
+        top_sport_events_future,
+        bet_safe_events_future,
+        oly_bet_events_future
+    );
+
+    let events_by_provider = vec![top_sport_events?, bet_safe_events?, oly_bet_events?];
 
     println!("{:#?}", find_arbitrages(events_by_provider));
 
