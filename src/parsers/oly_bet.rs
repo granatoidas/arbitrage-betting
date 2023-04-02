@@ -59,8 +59,8 @@ impl BookieParser for OlyBetParser {
             let sport_event = SportEvent {
                 team1: team_names.get(0).ok_or("can't find team 1")?.clone(),
                 team2: team_names.get(1).ok_or("can't find team 2")?.clone(),
-                kof1: kof1.ok_or("can't find coefficient 1")?.clone(),
-                kof2: kof2.ok_or("can't find coefficient 2")?.clone(),
+                kof1: kof1.ok_or("can't find coefficient 1")?.clone().parse()?,
+                kof2: kof2.ok_or("can't find coefficient 2")?.clone().parse()?,
                 provider: String::from("olyBet"),
             };
 

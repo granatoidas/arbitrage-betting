@@ -41,18 +41,78 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     let events_by_provider = vec![top_sport_events?, bet_safe_events?, oly_bet_events?];
 
-    println!("{:#?}", find_arbitrages(events_by_provider));
-
-    // println!("{:#?}", events_by_provider[0]);
-    // println!("");
-    // println!("");
-    // println!("");
-    // println!("{:#?}", events_by_provider[1]);
+    println!("{:#?}", find_arbitrages(events_by_provider)?);
 
     Ok(())
 }
 
+#[derive(Debug)]
+pub struct PossibleArbitrage {
+    pub team1: String,
+    pub team2: String,
+    pub kof1: f64,
+    pub kof2: f64,
+    pub kof1_provider: String,
+    pub kof2_provider: String,
+    pub is_arbitrage: bool,
+    pub providers_offering_bets: Vec<String>,
+}
+
 fn find_arbitrages(
+    events_by_provider: Vec<Vec<SportEvent>>,
+) -> Result<(Vec<PossibleArbitrage>, Vec<SportEvent>), Box<dyn Error>> {
+    let grouped_events = group_events(events_by_provider)?;
+
+    let mut events_wo_pairs = vec![];
+    let mut possible_arbitrages = vec![];
+    for mut event_group in grouped_events {
+        if event_group.len() == 1 {
+            events_wo_pairs.push(event_group.pop().ok_or("")?);
+            continue;
+        }
+
+        let first_event = &event_group[0];
+        let mut possible_arbitrage = PossibleArbitrage {
+            team1: first_event.team1.clone(),
+            team2: first_event.team2.clone(),
+            kof1: first_event.kof1,
+            kof2: first_event.kof2,
+            kof1_provider: first_event.provider.clone(),
+            kof2_provider: first_event.provider.clone(),
+            is_arbitrage: false,
+            providers_offering_bets: vec![first_event.provider.clone()],
+        };
+
+        for event in event_group.iter().skip(1) {
+            if event.kof1 > possible_arbitrage.kof1 {
+                possible_arbitrage.kof1 = event.kof1;
+                possible_arbitrage.kof1_provider = event.provider.clone();
+            }
+            if event.kof2 > possible_arbitrage.kof2 {
+                possible_arbitrage.kof2 = event.kof2;
+                possible_arbitrage.kof2_provider = event.provider.clone();
+            }
+
+            possible_arbitrage
+                .providers_offering_bets
+                .push(event.provider.clone())
+        }
+
+        possible_arbitrage.mark_is_arbitrage();
+
+        possible_arbitrages.push(possible_arbitrage);
+    }
+
+    return Ok((possible_arbitrages, events_wo_pairs));
+}
+
+impl PossibleArbitrage {
+    fn mark_is_arbitrage(&mut self) {
+        self.is_arbitrage = (self.kof1 * self.kof2) / (self.kof1 + self.kof2) > 1.0;
+    }
+}
+
+fn group_events(
     mut events_by_provider: Vec<Vec<SportEvent>>,
 ) -> Result<Vec<Vec<SportEvent>>, Box<dyn Error>> {
     let mut grouped_events: Vec<Vec<SportEvent>> = vec![];
