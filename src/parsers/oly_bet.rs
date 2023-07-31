@@ -1,4 +1,4 @@
-use std::error::Error;
+use std::{error::Error};
 
 use async_trait::async_trait;
 use playwright::api::Page;
@@ -49,20 +49,40 @@ impl BookieParser for OlyBetParser {
                 .map(|span| span.inner_html().trim().to_string())
                 .collect::<Vec<_>>();
 
-            let kof1 = kofs.get(1);
-            let kof_draw = kofs.get(2);
-            let kof2 = kofs.get(3);
-
-            if kof1.is_none() || kof_draw.is_none() || kof2.is_none() {
-                continue;
-            }
+            let kof1 = match kofs.get(1) {
+                Some(value) => {
+                    if value.is_empty() {
+                        continue;
+                    }
+                    value
+                }
+                None => continue,
+            };
+            let kof_draw = match kofs.get(2) {
+                Some(value) => {
+                    if value.is_empty() {
+                        continue;
+                    }
+                    value
+                }
+                None => continue,
+            };
+            let kof2 = match kofs.get(3) {
+                Some(value) => {
+                    if value.is_empty() {
+                        continue;
+                    }
+                    value
+                }
+                None => continue,
+            };
 
             let sport_event = SportEvent {
                 team1: team_names.get(0).ok_or("can't find team 1")?.clone(),
                 team2: team_names.get(1).ok_or("can't find team 2")?.clone(),
-                kof1: kof1.ok_or("can't find coefficient 1")?.clone().parse()?,
-                kof_draw: kof_draw.ok_or("can't find draw coefficient")?.clone().parse()?,
-                kof2: kof2.ok_or("can't find coefficient 2")?.clone().parse()?,
+                kof1: kof1.clone().parse()?,
+                kof_draw: kof_draw.clone().parse()?,
+                kof2: kof2.clone().parse()?,
                 provider: String::from("olyBet"),
             };
 
