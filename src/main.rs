@@ -116,8 +116,15 @@ fn find_arbitrages(
 
 impl PossibleArbitrage {
     fn mark_is_arbitrage(&mut self) {
-        self.is_arbitrage =
-            (self.kof1 * self.kof2 * self.kof_draw) / (self.kof1 + self.kof2 + self.kof_draw) > 1.0;
+        let bet_amount_1 = 1.0 / (1.0 + self.kof1 / self.kof2 + self.kof1 / self.kof_draw);
+        let bet_amount_draw = 1.0 / (1.0 + self.kof_draw / self.kof1 + self.kof_draw / self.kof2);
+        let bet_amount_2 = 1.0 / (1.0 + self.kof2 / self.kof1 + self.kof2 / self.kof_draw);
+
+        let bet_1_win = bet_amount_1 * self.kof1;
+        let bet_draw_win = bet_amount_draw * self.kof_draw;
+        let bet_2_win = bet_amount_2 * self.kof2;
+
+        self.is_arbitrage = bet_1_win > 1.0 || bet_draw_win > 1.0 || bet_2_win > 1.0;
     }
 }
 
