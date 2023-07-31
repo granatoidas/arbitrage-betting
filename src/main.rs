@@ -3,6 +3,7 @@ use std::{error::Error, vec};
 use models::SportEvent;
 use parser::BookieParser;
 use playwright::Playwright;
+use unicode_normalization::UnicodeNormalization;
 
 mod models;
 mod parser;
@@ -168,10 +169,10 @@ fn group_events(
 }
 
 fn compare_events(event_1: &SportEvent, event_2: &SportEvent) -> (bool, bool) {
-    let event_1_team_1 = event_1.team1.to_lowercase();
-    let event_1_team_2 = event_1.team2.to_lowercase();
-    let event_2_team_1 = event_2.team1.to_lowercase();
-    let event_2_team_2 = event_2.team2.to_lowercase();
+    let event_1_team_1 = sanitize_team_name(event_1.team1.clone());
+    let event_1_team_2 = sanitize_team_name(event_1.team2.clone());
+    let event_2_team_1 = sanitize_team_name(event_2.team1.clone());
+    let event_2_team_2 = sanitize_team_name(event_2.team2.clone());
 
     if event_1_team_1 == event_2_team_1 && event_1_team_2 == event_2_team_2 {
         return (true, true);
@@ -182,4 +183,11 @@ fn compare_events(event_1: &SportEvent, event_2: &SportEvent) -> (bool, bool) {
     }
 
     (false, false)
+}
+
+fn sanitize_team_name(team: String) -> String {
+    let lowercase = team.to_lowercase();
+    let normalized = lowercase.nfc().collect::<String>();
+    let fc_removed = normalized.replace("FC", "").trim().to_string();
+    return fc_removed;
 }
