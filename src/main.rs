@@ -51,8 +51,10 @@ pub struct PossibleArbitrage {
     pub team1: String,
     pub team2: String,
     pub kof1: f64,
+    pub kof_draw: f64,
     pub kof2: f64,
     pub kof1_provider: String,
+    pub kof_draw_provider: String,
     pub kof2_provider: String,
     pub is_arbitrage: bool,
     pub providers_offering_bets: Vec<String>,
@@ -76,8 +78,10 @@ fn find_arbitrages(
             team1: first_event.team1.clone(),
             team2: first_event.team2.clone(),
             kof1: first_event.kof1,
+            kof_draw: first_event.kof_draw,
             kof2: first_event.kof2,
             kof1_provider: first_event.provider.clone(),
+            kof_draw_provider: first_event.provider.clone(),
             kof2_provider: first_event.provider.clone(),
             is_arbitrage: false,
             providers_offering_bets: vec![first_event.provider.clone()],
@@ -91,6 +95,10 @@ fn find_arbitrages(
             if event.kof2 > possible_arbitrage.kof2 {
                 possible_arbitrage.kof2 = event.kof2;
                 possible_arbitrage.kof2_provider = event.provider.clone();
+            }
+            if event.kof_draw > possible_arbitrage.kof_draw {
+                possible_arbitrage.kof_draw = event.kof_draw;
+                possible_arbitrage.kof_draw_provider = event.provider.clone();
             }
 
             possible_arbitrage
@@ -108,7 +116,8 @@ fn find_arbitrages(
 
 impl PossibleArbitrage {
     fn mark_is_arbitrage(&mut self) {
-        self.is_arbitrage = (self.kof1 * self.kof2) / (self.kof1 + self.kof2) > 1.0;
+        self.is_arbitrage =
+            (self.kof1 * self.kof2 * self.kof_draw) / (self.kof1 + self.kof2 + self.kof_draw) > 1.0;
     }
 }
 

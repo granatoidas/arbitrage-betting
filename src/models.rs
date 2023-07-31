@@ -4,6 +4,7 @@ pub struct SportEvent {
     pub team2: String,
     pub kof1: f64,
     pub kof2: f64,
+    pub kof_draw: f64,
     pub provider: String,
 }
 

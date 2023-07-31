@@ -50,9 +50,10 @@ impl BookieParser for OlyBetParser {
                 .collect::<Vec<_>>();
 
             let kof1 = kofs.get(1);
-            let kof2 = kofs.get(2);
+            let kof_draw = kofs.get(2);
+            let kof2 = kofs.get(3);
 
-            if kof1.is_none() || kof2.is_none() {
+            if kof1.is_none() || kof_draw.is_none() || kof2.is_none() {
                 continue;
             }
 
@@ -60,6 +61,7 @@ impl BookieParser for OlyBetParser {
                 team1: team_names.get(0).ok_or("can't find team 1")?.clone(),
                 team2: team_names.get(1).ok_or("can't find team 2")?.clone(),
                 kof1: kof1.ok_or("can't find coefficient 1")?.clone().parse()?,
+                kof_draw: kof_draw.ok_or("can't find draw coefficient")?.clone().parse()?,
                 kof2: kof2.ok_or("can't find coefficient 2")?.clone().parse()?,
                 provider: String::from("olyBet"),
             };
@@ -74,7 +76,7 @@ impl BookieParser for OlyBetParser {
 impl OlyBetParser {
     async fn get_content_from_page(&self) -> Result<String, Box<dyn Error>> {
         self.page.goto_builder(
-            "https://sportsbook-lt.orakulas.lt/#/sport/?containerID=prematch&callbackName=bettingCB&oddsType=decimal&type=0&lang=lit&AuthToken=anonymous&sport=3&region=50003&competition=756&game=21759112",
+            "https://sportsbook-lt.orakulas.lt/#/sport/?type=0&sport=1&region=20001&competition=18286520&game=22723272",
         )
         // .wait_until(playwright::api::DocumentLoadState::DomContentLoaded)
         .goto()

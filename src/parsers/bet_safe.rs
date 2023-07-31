@@ -71,9 +71,10 @@ impl BookieParser for BetSafePraser {
             }
 
             let kof1 = kofs.get(0);
-            let kof2 = kofs.get(1);
+            let kof_draw = kofs.get(1);
+            let kof2 = kofs.get(2);
 
-            if kof1.is_none() || kof2.is_none() {
+            if kof1.is_none() || kof_draw.is_none() || kof2.is_none() {
                 // Indicates that there are locks on the first two bets. Might need more robust logic later
                 continue;
             }
@@ -82,7 +83,8 @@ impl BookieParser for BetSafePraser {
                 team1: team_names.get(0).ok_or("can't find team 1")?.clone(),
                 team2: team_names.get(1).ok_or("can't find team 2")?.clone(),
                 kof1: kofs.get(0).ok_or("can't find coefficient 1")?.clone().parse()?,
-                kof2: kofs.get(1).ok_or("can't find coefficient 2")?.clone().parse()?,
+                kof_draw: kofs.get(1).ok_or("can't find draw coefficient")?.clone().parse()?,
+                kof2: kofs.get(2).ok_or("can't find coefficient 2")?.clone().parse()?,
                 provider: String::from("betSafe"),
             };
 
@@ -96,7 +98,7 @@ impl BookieParser for BetSafePraser {
 impl BetSafePraser {
     async fn get_content_from_page(&self) -> Result<String, Box<dyn Error>> {
         self.page
-            .goto_builder("https://www.betsafe.lt/lt/lazybos/krepsinis/siaures-amerika/nba")
+            .goto_builder("https://www.betsafe.lt/lt/lazybos/futbolas/europa/uefa-cempionu-lyga-kvalifikacija")
             // .wait_until(playwright::api::DocumentLoadState::DomContentLoaded)
             .goto()
             .await?;

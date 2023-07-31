@@ -37,7 +37,7 @@ impl BookieParser for TopSportParser {
         let client = reqwest::Client::builder().gzip(true).brotli(true).build()?;
 
         let resp = client
-            .get("https://www.topsport.lt/krepsinis/nba")
+            .get("https://www.topsport.lt/futbolas/cempionu-lyga")
             .default_chrome_headers()
             .send()
             .await?
@@ -70,7 +70,8 @@ impl BookieParser for TopSportParser {
                 team1: team_names.get(0).ok_or("can't find team 1")?.to_string(),
                 team2: team_names.get(1).ok_or("can't find team 2")?.to_string(),
                 kof1: kofs.get(0).ok_or("can't find coefficient 1")?.clone().parse()?,
-                kof2: kofs.get(1).ok_or("can't find coefficient 2")?.clone().parse()?,
+                kof_draw: kofs.get(1).ok_or("can't find draw coefficient")?.clone().parse()?,
+                kof2: kofs.get(2).ok_or("can't find coefficient 2")?.clone().parse()?,
                 provider: String::from("topSport"),
             };
 
