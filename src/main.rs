@@ -174,11 +174,27 @@ fn compare_events(event_1: &SportEvent, event_2: &SportEvent) -> (bool, bool) {
     let event_2_team_1 = sanitize_team_name(event_2.team1.clone());
     let event_2_team_2 = sanitize_team_name(event_2.team2.clone());
 
-    if event_1_team_1 == event_2_team_1 && event_1_team_2 == event_2_team_2 {
+    let team_1_1_names_match = event_1_team_1 == event_2_team_1
+        || event_1_team_1.contains(&event_2_team_1)
+        || event_2_team_1.contains(&event_1_team_1);
+
+    let team_2_2_names_match = event_1_team_2 == event_2_team_2
+        || event_1_team_2.contains(&event_2_team_2)
+        || event_2_team_2.contains(&event_1_team_2);
+
+    if team_1_1_names_match && team_2_2_names_match {
         return (true, true);
     }
 
-    if event_1_team_2 == event_2_team_1 && event_1_team_1 == event_2_team_2 {
+    let team_1_2_names_match = event_1_team_1 == event_2_team_2
+        || event_1_team_1.contains(&event_2_team_2)
+        || event_2_team_2.contains(&event_1_team_1);
+
+    let team_2_1_names_match = event_1_team_2 == event_2_team_1
+        || event_1_team_2.contains(&event_2_team_1)
+        || event_2_team_1.contains(&event_1_team_2);
+
+    if team_1_2_names_match && team_2_1_names_match {
         return (true, false);
     }
 
@@ -188,6 +204,7 @@ fn compare_events(event_1: &SportEvent, event_2: &SportEvent) -> (bool, bool) {
 fn sanitize_team_name(team: String) -> String {
     let lowercase = team.to_lowercase();
     let normalized = lowercase.nfc().collect::<String>();
-    let fc_removed = normalized.replace("FC", "").trim().to_string();
-    return fc_removed;
+    let fc_removed = normalized.replace("fc", "").trim().to_string();
+    let fk_removed = fc_removed.replace("fk", "").trim().to_string();
+    return fk_removed;
 }
