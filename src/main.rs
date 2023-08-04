@@ -9,6 +9,7 @@ mod models;
 mod parser;
 mod parsers {
     pub mod bet_safe;
+    pub mod c_bet;
     mod http_client_extensions;
     pub mod oly_bet;
     pub mod top_sport;
@@ -30,17 +31,27 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let page = context.new_page().await?;
     let oly_bet_parser = parsers::oly_bet::OlyBetParser::new(page);
 
+    let page = context.new_page().await?;
+    let c_bet_parser = parsers::c_bet::CBetPraser::new(page);
+
     let top_sport_events_future = top_sport_parser.parse();
     let bet_safe_events_future = bet_safe_parser.parse();
     let oly_bet_events_future = oly_bet_parser.parse();
+    let c_bet_events_future = c_bet_parser.parse();
 
-    let (top_sport_events, bet_safe_events, oly_bet_events) = tokio::join!(
+    let (top_sport_events, bet_safe_events, oly_bet_events, c_bet_events) = tokio::join!(
         top_sport_events_future,
         bet_safe_events_future,
-        oly_bet_events_future
+        oly_bet_events_future,
+        c_bet_events_future
     );
 
-    let events_by_provider = vec![top_sport_events?, bet_safe_events?, oly_bet_events?];
+    let events_by_provider = vec![
+        top_sport_events?,
+        bet_safe_events?,
+        oly_bet_events?,
+        c_bet_events?,
+    ];
 
     println!("{:#?}", find_arbitrages(events_by_provider)?);
 
